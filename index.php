@@ -12,3 +12,9 @@
 error_reporting(E_ERROR | E_PARSE);
 
 include 'competitions.php';
+
+add_action('admin_menu' , function(){
+    add_menu_page('Razorpay Settings','Razorpay Settings','manage_options', 'razorpay_keys_admin', 'razorpay_keys_brs', 'dashicons-admin-users','2');
+});
+
+function razorpay_keys_brs(){  include 'razorpay_settings.php'; }
