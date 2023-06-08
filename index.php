@@ -22,3 +22,7 @@ function razorpay_keys_brs() {
 }
 
 include 'user_extra_fields.php';
+
+add_shortcode("comp_my_account", function(){
+	include 'my_account.php';
+});
