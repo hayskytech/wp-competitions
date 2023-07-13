@@ -11,7 +11,36 @@
 // $wpdb->show_errors(); $wpdb->print_error();
 error_reporting(E_ERROR | E_PARSE);
 
+function add_file_upload_capability_to_contributor() {
+	$contributor_role = get_role('contributor');
+
+	// Add capabilities for file upload
+	$contributor_role->add_cap('upload_files');
+	$contributor_role->add_cap('edit_posts');
+}
+add_action('init', 'add_file_upload_capability_to_contributor');
+
+
+
+
+
+
+// Limit media library access
+add_filter('ajax_query_attachments_args', 'wpb_show_current_user_attachments');
+
+function wpb_show_current_user_attachments($query) {
+	$user_id = get_current_user_id();
+	if ($user_id && !current_user_can('activate_plugins') && !current_user_can('edit_others_posts')) {
+		$query['author'] = $user_id;
+	}
+	return $query;
+}
+
+
+
 include 'competitions.php';
+include 'application_cpt.php';
+include 'comp_extra.php';
 
 add_action('admin_menu', function () {
 	add_menu_page('Razorpay Settings', 'Razorpay Settings', 'manage_options', 'razorpay_keys_admin', 'razorpay_keys_brs', 'dashicons-admin-users', '2');
@@ -23,6 +52,38 @@ function razorpay_keys_brs() {
 
 include 'user_extra_fields.php';
 
-add_shortcode("comp_my_account", function(){
+add_shortcode("comp_my_account", function () {
 	include 'my_account.php';
 });
+add_shortcode("comp_my_payments", function () {
+	include 'my_payments.php';
+});
+
+// include 'razorpay-php/Razorpay.php';
+// use Razorpay\Api\Api;
+
+function curll($url, $data = array()) {
+	$apiKey = get_option('razorpay_key');
+	$apiSecret = get_option('razorpay_secret');
+	$ch = curl_init($url);
+	curl_setopt($ch, CURLOPT_USERPWD, $apiKey . ':' . $apiSecret);
+	curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'GET');
+	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+	curl_setopt(
+		$ch,
+		CURLOPT_HTTPHEADER,
+		array(
+			'Content-Type: application/json'
+		)
+	);
+	$response = json_decode(curl_exec($ch));
+	curl_close($ch);
+	return $response;
+}
+
+function create_paylink() {
+	include 'ajax_create_paylink.php';
+}
+
+add_action('wp_ajax_ajax_create_paylink', 'create_paylink');
+add_action('wp_ajax_nopriv_ajax_create_paylink', 'create_paylink');

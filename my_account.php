@@ -13,6 +13,13 @@ if (isset($_POST["submit"])) {
 		update_user_meta($user_id, $key, $value);
 	}
 }
+if (isset($_REQUEST["razorpay_payment_link_id"])) {
+	$link_id = $_REQUEST["razorpay_payment_link_id"];
+	$response = curll('https://api.razorpay.com/v1/payment_links/'.$link_id);
+	if (json_decode($response)->status == 'paid') {
+		
+	}
+}
 $userdata = get_userdata($user_id);
 $meta = get_user_meta($user_id);
 $data["full_name"] = $meta["full_name"][0];
@@ -65,7 +72,7 @@ $data["email"] = $meta["email"][0];
 					<dialog id="mem_dialog">
 						<h3>Join Membership</h3>
 						<p><?php echo "Rs. $amount for $days"; ?></p>
-						<button onclick="pay_now()" disabled>Pay Now</button>
+						<button onclick="pay_now()">Pay Now</button>
 						<button onclick="pay_close()">Close</button>
 					</dialog>
 					<script>
@@ -76,7 +83,32 @@ $data["email"] = $meta["email"][0];
 						}
 						function pay_now() {
 							event.preventDefault()
-							// coming soon
+							event.target.innerText = 'Loading...'
+							btn = event.target
+							btn.disabled = true
+							jQuery(document).ready(function ($) {
+								// AJAX call
+								$.ajax({
+									url: '<?php echo admin_url('admin-ajax.php') ?>',
+									type: 'POST',
+									data: {
+										action: 'ajax_create_paylink',
+										data  : 'pay_now'
+									},
+									success: function (response) {
+										// btn.disabled = false;
+										btn.innerText = 'Redirecting...';
+										short_url =  JSON.parse(response).short_url;
+										window.location.assign(short_url)
+									},
+									error: function (xhr, status, error) {
+										console.log(error);
+										btn.disabled = false;
+										btn.innerText = 'Pay Now';
+									}
+								});
+							});
+
 						}
 						function pay_close() {
 							event.preventDefault()
