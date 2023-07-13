@@ -1,13 +1,13 @@
 <?php
 function custom_post_content($content) {
-	if (is_singular('post')) {
+	if (is_singular('competition')) {
 		global $post;
 		ob_start();
 		$deadline = get_post_meta($post->ID, 'deadline', true);
 		$user_id = get_current_user_id();
 		echo "<p>Last date: $deadline</p>";
 		if ($deadline > date('Y-m-d') || 1) {
-			if (isset($_POST['my_image_upload_nonce'])) {
+			if (isset($_POST['profile_picture1'])) {
 				$id = wp_insert_post(
 					array(
 						'post_title' => "new application by $user_id",
@@ -17,7 +17,7 @@ function custom_post_content($content) {
 					)
 				);
 				update_post_meta($id, 'competition', $post->ID);
-				update_post_meta($id, 'pdf', $_POST["my_image_upload_nonce"]);
+				update_post_meta($id, 'pdf', $_POST["profile_picture1"]);
 			}
 			$args = array(
 				'post_type' => 'application',
@@ -33,24 +33,45 @@ function custom_post_content($content) {
 				echo '<br><a href="' . wp_get_attachment_url($file_id) . '" target="_blank">View Uploaded File</a>';
 			} else {
 				echo 'Apply Now';
-				$userr = wp_get_current_user();
-
-				echo '<pre>';
-				print_r($userr->allcaps);
-				echo '</pre>';
 				?>
-				<!-- <script type="text/javascript" src="https://code.jquery.com/jquery-3.4.1.js"></script> -->
+				<script type="text/javascript" src="https://code.jquery.com/jquery-3.4.1.js"></script>
 				<form action="" method="post" enctype="multipart/form-data">
 					<table>
 						<tr>
 							<td>Upload:</td>
 							<td>
-								<?php wp_nonce_field('my_file', 'my_image_upload_nonce'); ?>
-								<div class="image-preview-wrapper">
-									<a id="link_pdf">View</a>
-								</div>
-								<input type="button" class="ui blue mini button" value="Choose Media" onclick="choose_media(this)" />
-								<input type="hidden" name="pdf">
+								<form id="file-upload-form" method="POST" enctype="multipart/form-data">
+									<div id="uploadMsg"></div>
+									<input type="button" class="button button-secondary upload-button" value="Select File" data-group="1">
+									<input type="hidden" name="profile_picture1" id="profile-picture1" value="'.$picture1.'">
+								</form>
+								<script>
+									jQuery(document).ready(function ($) {
+										var mediaUploader;
+										$('.upload-button').on('click', function (e) {
+											e.preventDefault();
+											var buttonID = $(this).data('group');
+											if (mediaUploader) {
+												mediaUploader.open();
+												return;
+											}
+											mediaUploader = wp.media.frames.file_frame = wp.media({
+												title: 'Choose a Hotel Picture',
+												button: {
+													text: 'Choose Picture'
+												},
+												multiple: false
+											});
+											mediaUploader.on('select', function () {
+												attachment = mediaUploader.state().get('selection').first().toJSON();
+												$('#profile-picture' + buttonID).val(attachment.id);
+												$('#profile-picture-preview' + buttonID).css('background-image', 'url(' + attachment.url + ')');
+												document.getElementById('uploadMsg').innerText = attachment.filename
+											});
+											mediaUploader.open();
+										});
+									});
+								</script>
 							</td>
 						</tr>
 						<tr>
@@ -68,52 +89,13 @@ function custom_post_content($content) {
 					window.history.replaceState(null, null, window.location.href);
 				}
 			</script>
-			<script type='text/javascript'>
-				function choose_media(x) {
-					var file_frame;
-					var wp_media_post_id = wp.media.model.settings.post.id; // Store the old id
-					var set_to_post_id = jQuery(x).parent().find('input[type=hidden]').val(); // Set this
-					if (file_frame) {
-						file_frame.uploader.uploader.param('post_id', set_to_post_id);
-						file_frame.open();
-						return;
-					} else {
-						wp.media.model.settings.post.id = set_to_post_id;
-					}
-					file_frame = wp.media.frames.file_frame = wp.media({
-						title: 'Select a file to upload',
-						button: {
-							text: 'Use this File',
-						},
-						multiple: false
-					});
-					// When an image is selected, run a callback.
-					file_frame.on('select', function () {
-						// We set multiple to false so only get one image from the uploader
-						attachment = file_frame.state().get('selection').first().toJSON();
-						// Do something with attachment.id and/or attachment.url here
-						jQuery(x).parent().find('img').attr('src', attachment.url).css('width', 'auto');
-						jQuery(x).parent().find('input[type=hidden]').val(attachment.id);
-						// Restore the main post ID
-						wp.media.model.settings.post.id = wp_media_post_id;
-					});
-					// Finally, open the modal
-					file_frame.open();
-					// Restore the main ID when the add media button is pressed
-					jQuery('a.add_media').on('click', function () {
-						// wp.media.model.settings.post.id = wp_media_post_id;
-					});
-				}
-			</script>
 <?php
 		} else {
 			echo "$deadline was the last date.";
 		}
-
 		$message = ob_get_clean();
 		$content .= $message;
 	}
-
 	return $content;
 }
 add_filter('the_content', 'custom_post_content');
