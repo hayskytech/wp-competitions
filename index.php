@@ -20,11 +20,6 @@ function add_file_upload_capability_to_contributor() {
 }
 add_action('init', 'add_file_upload_capability_to_contributor');
 
-
-
-
-
-
 // Limit media library access
 add_filter('ajax_query_attachments_args', 'wpb_show_current_user_attachments');
 
@@ -36,11 +31,7 @@ function wpb_show_current_user_attachments($query) {
 	return $query;
 }
 
-
-
-include 'competitions.php';
-include 'application_cpt.php';
-include 'comp_extra.php';
+include 'apply_page.php';
 
 add_action('admin_menu', function () {
 	add_menu_page('Razorpay Settings', 'Razorpay Settings', 'manage_options', 'razorpay_keys_admin', 'razorpay_keys_brs', 'dashicons-admin-users', '2');

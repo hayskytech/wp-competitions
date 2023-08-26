@@ -89,7 +89,7 @@ function custom_post_content($content) {
 					window.history.replaceState(null, null, window.location.href);
 				}
 			</script>
-<?php
+			<?php
 		} else {
 			echo "$deadline was the last date.";
 		}
